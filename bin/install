@@ -15,7 +15,7 @@ DL_PATH="$TOOL_INSTALL_PATH/tmp.tar.gz"
 
 say "Installing $TOOL_NAME@$ASDF_INSTALL_VERSION"
 
-DL_LINK="$REPO_URL/releases/download/v$ASDF_INSTALL_VERSION/${TOOL_NAME}-${ASDF_INSTALL_VERSION}_$(get_arch).tar.gz"
+DL_LINK="$REPO_URL/releases/download/v$ASDF_INSTALL_VERSION/${TOOL_NAME}-$(get_arch).tar.gz"
 
 say "Downloading $DL_LINK to $DL_PATH"
 download "$DL_PATH" "$DL_LINK" || {

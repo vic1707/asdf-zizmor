@@ -1,6 +1,6 @@
 <div align="center">
 
-# asdf-NAME ![Test](https://github.com/vic1707/asdf-NAME/workflows/Test/badge.svg) ![Lint](https://github.com/vic1707/asdf-NAME/workflows/Lint/badge.svg)
+# asdf-zizmor ![Test](https://github.com/vic1707/asdf-zizmor/workflows/Test/badge.svg) ![Lint](https://github.com/vic1707/asdf-zizmor/workflows/Lint/badge.svg)
 
 </div>
 
@@ -18,27 +18,27 @@
 
 # Install
 
-You can install this plugin to install [NAME](..) repository.
+You can install this plugin to install [zizmor](https://github.com/zizmorcore/zizmor) repository.
 The plugin is dynamic, meaning it can be used for multiple tools without needing to hard-code each one.
 
 ```shell
-asdf plugin add NAME https://github.com/vic1707/asdf-NAME.git
+asdf plugin add zizmor https://github.com/vic1707/asdf-zizmor.git
 ```
 
 # Usage
 
 ```shell
 # Show all installable versions
-asdf list-all NAME
+asdf list-all zizmor
 
 # Install specific version
-asdf install NAME latest
+asdf install zizmor latest
 
 # Set a version globally (on your ~/.tool-versions file)
-asdf global NAME latest
+asdf global zizmor latest
 
 # Now your tool's commands are available
-NAME --version
+zizmor --version
 ```
 
 Check [asdf](https://github.com/asdf-vm/asdf) readme for more instructions on how to
@@ -53,7 +53,7 @@ install & manage versions.
 
 Contributions of any kind welcome!
 
-[Thanks goes to these contributors](https://github.com/vic1707/asdf-NAME/graphs/contributors)!
+[Thanks goes to these contributors](https://github.com/vic1707/asdf-zizmor/graphs/contributors)!
 
 # License
 

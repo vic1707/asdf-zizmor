@@ -2,8 +2,8 @@
 
 set -euo pipefail
 
-TOOL_NAME="NAME"
-REPO_URL="TOOL_GITHUB_URL"
+TOOL_NAME="zizmor"
+REPO_URL="https://github.com/zizmorcore/zizmor"
 
 say() {
 	printf "[asdf-$TOOL_NAME]: %s\n" "$*"
@@ -57,24 +57,24 @@ get_arch() {
 
 	case "$platform" in
 		Darwin)
-			platform="darwin"
+			platform="apple-darwin"
 			case "$arch" in
-				aarch64 | arm64) arch="arm64" ;;
-				x86_64) arch="amd64" ;;
+				aarch64 | arm64) arch="aarch64" ;;
+				x86_64) ;;
 				*) fail "Incompatible darwin architecture." ;;
 			esac
 			;;
 		Linux)
-			platform="linux"
+			platform="unknown-linux-gnu" # handle musl?
 			case "$arch" in
-				aarch64 | arm64) arch="arm64" ;;
-				# armv7l | armv7) base_triple="armv7-unknown-linux" ;;
-				x86_64) arch="amd64" ;;
+				aarch64 | arm64) arch="aarch64" ;;
+				# armv7l | armv7) arch="armv7" ;;
+				x86_64) ;;
 				*) fail "Incompatible linux architecture." ;;
 			esac
 			;;
 		*) fail "Incompatible platform." ;;
 	esac
 
-	printf '%s' "${platform}_${arch}"
+	printf '%s' "${arch}-${platform}"
 }
