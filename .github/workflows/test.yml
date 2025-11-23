@@ -6,10 +6,50 @@ on:
         branches: [main]
     workflow_dispatch:
 
+permissions: {}
+
 jobs:
     banned-command:
         name: Check for banned commands
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v4.1.7
+            - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+              with:
+                  persist-credentials: false
+
             - run: ./tests/banned-commands.sh
+
+    install:
+        name: Test install latest
+        strategy:
+            fail-fast: false
+            matrix:
+                include:
+                    - os: ubuntu-latest
+                    - os: ubuntu-latest
+                      container: alpine:latest
+                    - os: macos-latest
+        runs-on: ${{ matrix.os }}
+        container: ${{ matrix.container }}
+        steps:
+            - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+              with:
+                  persist-credentials: false
+
+            - if: ${{ matrix.container == 'alpine:latest' }}
+              run: apk add --no-cache bash git
+            - if: ${{ matrix.os == 'ubuntu-latest' && !matrix.container }}
+              run: sudo apt install --update -y git curl
+
+            - name: extract tool-name
+              id: tool-name
+              shell: bash
+              run: |
+                  source lib/utils
+                  echo "tool_name=$TOOL_NAME" >> "$GITHUB_OUTPUT"
+
+            - name: Test install
+              # v4.0.1 fails: <https://github.com/asdf-vm/actions/issues/609>
+              uses: asdf-vm/actions/plugin-test@05e0d2ed97b598bfce82fd30daf324ae0c4570e6 # v3.0.2
+              with:
+                  command: ${{ steps.tool-name.outputs.tool_name }} --version

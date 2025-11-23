@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+set -o errtrace
+trap 'say "❌ Error on line $LINENO"' ERR
+
+# shellcheck source=lib/utils
+. "$(dirname "$0")/../lib/utils"
+
+if [ "$ASDF_INSTALL_TYPE" != "version" ]; then
+    fail "This plugin only supports release installs."
+fi
+
+TOOL_INSTALL_PATH="$ASDF_INSTALL_PATH/bin"
+mkdir -p "$TOOL_INSTALL_PATH"
+
+say "Installing $TOOL_NAME@$ASDF_INSTALL_VERSION"
+
+download "$(dl_link)" \
+    | tar -xz -C "$TOOL_INSTALL_PATH"
+
+say "$TOOL_NAME@$ASDF_INSTALL_VERSION installation was successful!"

@@ -5,76 +5,137 @@ set -euo pipefail
 TOOL_NAME="zizmor"
 REPO_URL="https://github.com/zizmorcore/zizmor"
 
+# dl_link() {
+#	RELEASE_BASE_URL="$REPO_URL/releases/download/$ASDF_INSTALL_VERSION"
+# 	DL_FILE="$TOOL_NAME-$(get_arch).tar.gz"
+
+# 	URL="$RELEASE_BASE_URL/$DL_FILE"
+
+# 	printf "%s" "$URL"
+# }
+
+# Mostly used for rust tools
+dl_link() {
+    RELEASE_BASE_URL="$REPO_URL/releases/download/$ASDF_INSTALL_VERSION"
+    URL=""
+    for triple in $(get_target_triples); do
+        DL_FILE="$TOOL_NAME-$triple.tar.gz"
+        TEST_URL="$RELEASE_BASE_URL/$DL_FILE"
+
+        ! is_valid "$TEST_URL" && {
+            say "Tried downloading with $TEST_URL but it doesn't exist."
+            continue
+        }
+        URL="$TEST_URL"
+        break
+    done
+
+    printf "%s" "$URL"
+}
+
 say() {
-	printf "[asdf-$TOOL_NAME]: %s\n" "$*"
+    printf "[asdf-$TOOL_NAME]: %s\n" "$*"
 }
 
 fail() {
-	say "$*" >&2
-	exit 1
+    say "$*" >&2
+    exit 1
 }
 
 sort_semver() {
-	sort -t. -k 1,1n -k 2,2n -k 3,3n
+    sort -t. -k 1,1n -k 2,2n -k 3,3n
 }
 
 list_github_semver_tags() {
-	git ls-remote --tags --refs "$REPO_URL" \
-		| grep -o "refs/tags/v.*" \
-		| cut -d/ -f3- \
-		| sed "s/^v//" \
-		| grep -oE '^[0-9]+\.[0-9]+\.[0-9]+$' \
-		| uniq
+    git ls-remote --tags --refs "$REPO_URL" \
+        | cut -d/ -f3- \
+        | sed "s/^v//" \
+        | grep -oE '^[0-9]+\.[0-9]+\.[0-9]+$' \
+        | uniq
 }
 
 is_valid() {
-	url="$1"
-	if which curl > /dev/null; then
-		curl -s --fail "$url"
-	elif which wget > /dev/null; then
-		wget -q --spider "$url" &> /dev/null
-	else
-		fail "Error: Neither curl nor wget is available."
-	fi
+    url="$1"
+    if which curl > /dev/null; then
+        curl -s --fail "$url"
+    elif which wget > /dev/null; then
+        wget -q --spider "$url" &> /dev/null
+    else
+        fail "Error: Neither curl nor wget is available."
+    fi
 }
 
 download() {
-	out_file="$1"
-	url="$2"
+    url="$1"
 
-	if which curl > /dev/null; then
-		curl -fsSL ${GITHUB_API_TOKEN:+-H "Authorization: token $GITHUB_API_TOKEN"} -o "$out_file" "$url"
-	elif which wget > /dev/null; then
-		wget -q ${GITHUB_API_TOKEN:+--header="Authorization: token $GITHUB_API_TOKEN"} -O "$out_file" "$url"
-	else
-		fail "Error: Neither curl nor wget is available."
-	fi
+    if which curl > /dev/null; then
+        curl -fsSL ${GITHUB_API_TOKEN:+-H "Authorization: token $GITHUB_API_TOKEN"} "$url"
+    elif which wget > /dev/null; then
+        wget -q -O- ${GITHUB_API_TOKEN:+--header="Authorization: token $GITHUB_API_TOKEN"} "$url"
+    else
+        fail "Error: Neither curl nor wget is available."
+    fi
 }
 
-get_arch() {
-	platform=$(uname -s)
-	arch=$(uname -m)
+# returns an array of compatible triples (or quadruples depending on linux's libc)
+get_target_triples() {
+    platform=$(uname -s)
+    arch=$(uname -m)
 
-	case "$platform" in
-		Darwin)
-			platform="apple-darwin"
-			case "$arch" in
-				aarch64 | arm64) arch="aarch64" ;;
-				x86_64) ;;
-				*) fail "Incompatible darwin architecture." ;;
-			esac
-			;;
-		Linux)
-			platform="unknown-linux-gnu" # handle musl?
-			case "$arch" in
-				aarch64 | arm64) arch="aarch64" ;;
-				# armv7l | armv7) arch="armv7" ;;
-				x86_64) ;;
-				*) fail "Incompatible linux architecture." ;;
-			esac
-			;;
-		*) fail "Incompatible platform." ;;
-	esac
+    triples=""
+    append() {
+        [ -z "$triples" ] && triples="$1" || triples="$triples $1"
+    }
 
-	printf '%s' "${arch}-${platform}"
+    case "$platform" in
+        Darwin)
+            case "$arch" in
+                arm64 | aarch64)
+                    append "aarch64-apple-darwin"
+                    append "x86_64-apple-darwin" # Rosetta fallback
+                    ;;
+                x86_64) append "x86_64-apple-darwin" ;;
+                *) fail "Incompatible Darwin architecture: $arch" ;;
+            esac
+            ;;
+        Linux)
+            case "$arch" in
+                aarch64 | arm64) base="aarch64-unknown-linux" ;;
+                armv7l | armv7) base="armv7-unknown-linux" ;;
+                x86_64) base="x86_64-unknown-linux" ;;
+                *) fail "Incompatible Linux architecture: $arch" ;;
+            esac
+
+            libc_suffix=""
+            [ "$arch" = "armv7" ] || [ "$arch" = "armv7l" ] && libc_suffix="eabihf"
+
+            # Detect libc libraries for musl and glibc
+            musl_lib="/lib/ld-musl-$arch.so.1"
+            # glibc has special paths for specific architectures
+            glibc_lib=""
+            case "$arch" in
+                x86_64) glibc_lib="/lib64/ld-linux-x86-64.so.2" ;;
+                aarch64 | arm64) glibc_lib="/lib/ld-linux-aarch64.so.1" ;;
+                armv7l | armv7) glibc_lib="/lib/ld-linux-armhf.so.3" ;;
+            esac
+
+            musl=1
+            [ -f "$musl_lib" ] && musl=0
+            glibc=1
+            [ -f "$glibc_lib" ] && glibc=0
+
+            case "$musl:$glibc" in
+                0:0)
+                    append "${base}-musl${libc_suffix}"
+                    append "${base}-gnu${libc_suffix}"
+                    ;;
+                0:1) append "${base}-musl${libc_suffix}" ;;
+                1:0) append "${base}-gnu${libc_suffix}" ;;
+                1:1) fail "Neither musl nor glibc detected." ;;
+            esac
+            ;;
+        *) fail "Unsupported platform: $platform" ;;
+    esac
+
+    printf '%s' "$triples"
 }

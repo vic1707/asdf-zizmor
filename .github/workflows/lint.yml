@@ -6,20 +6,38 @@ on:
         branches: [main]
     workflow_dispatch:
 
-jobs:
-    shellcheck:
-        name: shellcheck
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v4.1.7
-            - name: ShellCheck
-              run: shellcheck bin/* lib/*
+permissions: {}
 
-    shfmt:
-        name: shfmt
+jobs:
+    lints:
+        name: linters
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v4.1.7
-            - uses: mfinelli/setup-shfmt@v3.0.1
+            - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+              with:
+                  persist-credentials: false
+            - uses: jdx/mise-action@9dc7d5dd454262207dea3ab5a06a3df6afc8ff26 # v3.4.1
+
+            - name: Shellcheck
+              run: |
+                  SUPPORTED_SHELLS="sh|bash"
+                  rg --ignore --hidden -l "^#!(.*/|.*env +)($SUPPORTED_SHELLS)" . \
+                      | xargs -r -t shellcheck
+
             - name: shfmt
-              run: shfmt -d -s -bn -ci -sr -kp .
+              # shfmt -w -i 4 -s -bn -ci -sr -kp .
+              run: |
+                  SUPPORTED_SHELLS="sh|bash"
+                  rg --ignore --hidden -l "^#!(.*/|.*env +)($SUPPORTED_SHELLS)" . \
+                      | xargs -r -t shfmt -d -i 4 -s -bn -ci -sr -kp
+
+            - name: Zizmor
+              env:
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              run: zizmor .
+
+            - name: Actionlint
+              run: actionlint
+
+            - name: Typos
+              run: typos
