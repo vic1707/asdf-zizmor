@@ -4,9 +4,10 @@ set -euo pipefail
 
 TOOL_NAME="zizmor"
 REPO_URL="https://github.com/zizmorcore/zizmor"
+TAG_PREFIX="v" # ""
 
 # dl_link() {
-#	RELEASE_BASE_URL="$REPO_URL/releases/download/$ASDF_INSTALL_VERSION"
+#	RELEASE_BASE_URL="$REPO_URL/releases/download/$TAG_PREFIX$ASDF_INSTALL_VERSION"
 # 	DL_FILE="$TOOL_NAME-$(get_arch).tar.gz"
 
 # 	URL="$RELEASE_BASE_URL/$DL_FILE"
@@ -16,7 +17,8 @@ REPO_URL="https://github.com/zizmorcore/zizmor"
 
 # Mostly used for rust tools
 dl_link() {
-    RELEASE_BASE_URL="$REPO_URL/releases/download/$ASDF_INSTALL_VERSION"
+	#
+    RELEASE_BASE_URL="$REPO_URL/releases/download/$TAG_PREFIX$ASDF_INSTALL_VERSION"
     URL=""
     for triple in $(get_target_triples); do
         DL_FILE="$TOOL_NAME-$triple.tar.gz"
