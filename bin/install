@@ -16,7 +16,10 @@ mkdir -p "$TOOL_INSTALL_PATH"
 
 say "Installing $TOOL_NAME@$ASDF_INSTALL_VERSION"
 
-download "$(dl_link)" \
+DL_LINK="$(dl_link)"
+[ -n "$DL_LINK" ] || fail "Couldn't find a download URL for $TOOL_NAME."
+
+download "$DL_LINK" \
     | tar -xz -C "$TOOL_INSTALL_PATH"
 
 say "$TOOL_NAME@$ASDF_INSTALL_VERSION installation was successful!"
