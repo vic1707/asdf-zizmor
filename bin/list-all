@@ -6,5 +6,5 @@ set -euo pipefail
 . "$(dirname "$0")/../lib/utils"
 
 list_github_semver_tags \
-	| sort_semver \
-	| xargs printf '%s '
+    | sort_semver \
+    | xargs printf '%s '
