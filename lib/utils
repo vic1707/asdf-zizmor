@@ -24,7 +24,7 @@ dl_link() {
         TEST_URL="$RELEASE_BASE_URL/$DL_FILE"
 
         ! is_valid "$TEST_URL" && {
-            say "Tried downloading with $TEST_URL but it doesn't exist."
+            say "Tried downloading with $TEST_URL but it doesn't exist." >&2
             continue
         }
         URL="$TEST_URL"

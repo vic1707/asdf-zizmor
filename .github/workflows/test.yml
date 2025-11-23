@@ -37,7 +37,7 @@ jobs:
                   persist-credentials: false
 
             - if: ${{ matrix.container == 'alpine:latest' }}
-              run: apk add --no-cache bash git gcompat # Uncomment if no musl build
+              run: apk add --no-cache bash git gcompat # Uncomment `gcompat` if no musl build
             - if: ${{ matrix.os == 'ubuntu-latest' && !matrix.container }}
               run: sudo apt install --update -y git curl
 
